@@ -16,5 +16,4 @@ function gen(projDir, opts){
     resGen.resPre = "[%" + packageInfo.name + "%]"
     resGen.gen();
 };
-console.log(path.join("/asdf/b", "/cds/sdf"))
 module.exports = gen;

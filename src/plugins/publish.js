@@ -86,16 +86,19 @@ function getLoadRes(resCfg, cfgName, result){
  * @param resCfg
  */
 function createResCfg4Publish(resCfg){
-    var ws = fs.createWriteStream(path.join(tempDir, "resCfg4Publish.js"));
+    console.log(resCfg);
     var jsResTemp = {};
+    var content = "";
     for(var i = 0, li = resCfg.gameModules.length; i < li; i++){
         var itemi = resCfg.gameModules[i];
-        var results = itemi.match(/\[\%[\w_\d]+\%\]/);
+        var results = itemi.match(/\[\%[\w_\d\-]+\%\]/);
         var moduleName = results[0].substring(2, results[0].length - 2);
+        console.log("___________________" + moduleName);
         var map = jsResTemp[moduleName];
         if(!map) {
             map = jsResTemp[moduleName] = [];
         }
+        console.log(itemi + "==============" + path.basename(path.normalize(itemi)));
         map.push(core4cc.getKeyName(path.basename(itemi)));
     }
     var jsResCount = 0;
@@ -103,30 +106,30 @@ function createResCfg4Publish(resCfg){
         if(!key) continue;
         var arr = jsResTemp[key];
         if(!arr) continue;
-        ws.write("js." + key + "={");
+        content +="js." + key + "={";
         for(var i = 0, li = arr.length; i < li; i++){
-            ws.write(arr[i] + ":'_" + jsResCount + "'");
-            if(i < li - 1) ws.write(",");
+            content +=arr[i] + ":'_" + jsResCount + "'";
+            if(i < li - 1) content +=",";
             jsResCount++;
         }
-        ws.write("};\r\n");
+        content +="};\r\n";
     }
-    ws.write("cc.res4GameModules = {};\r\n");
+    content +="cc.res4GameModules = {};\r\n";
     for(var i = 0, li = resCfg.gameModules.length; i < li; i++){
         var itemi = resCfg.gameModules[i];
         var result = getLoadRes(resCfg, itemi);
         var results = itemi.match(/\[\%[\w_\d]+\%\]/);
         var moduleName = results[0].substring(2, results[0].length - 2);
-        ws.write("cc.res4GameModules[js." + moduleName + "." + core4cc.getKeyName(path.basename(itemi)) + "]=[\r\n");
+        content +="cc.res4GameModules[js." + moduleName + "." + core4cc.getKeyName(path.basename(itemi)) + "]=[\r\n";
         for(var j = 0, lj = result.length; j < lj; j++){
             var itemj = result[j];
-            ws.write("res." + core4cc.getKeyName(path.basename((itemj))));
-            if(j < lj - 1) ws.write(",")
-            ws.write("\r\n")
+            content +="res." + core4cc.getKeyName(path.basename((itemj)));
+            if(j < lj - 1) content +=","
+            content +="\r\n"
         }
-        ws.write("]\r\n");
+        content +="]\r\n";
     }
-    ws.end();
+    fs.writeFileSync(path.join(tempDir, "resCfg4Publish.js"), content);
 };
 
 /**
@@ -210,9 +213,11 @@ function miniJs(jsArr){
             var dir = moduleName == projName ? projDir : path.join(modulesDir, moduleName);
             dir = path.normalize(dir + "/");
             var jsPath = itemi.replace(/\[\%[\w_\d\-]+\%\]/, dir);
+            jsPath = path.relative(projDir, jsPath);
 //            console.log(path.normalize(jsPath));
             execCode += path.normalize(jsPath) + " "
         }else{
+            itemi = path.relative(projDir, itemi);
 //            console.log(path.normalize(itemi));
             execCode += path.normalize(itemi) + " ";
         }
@@ -222,9 +227,10 @@ function miniJs(jsArr){
         "_super", "ctor", "Inflate", "decompress", "DeviceOrientationEvent", "DeviceMotionEvent",
         "accelerationIncludingGravity", "gamma", "beta", "alpha", "gl"
     ];
-    execCode += " -r '" + rArr.join(",") + "'";
+//    execCode += " -r '" + rArr.join(",") + "'";
     console.log(execCode);
     exec(execCode, function(err, data, info){
+        console.log(data);
         if(err) console.error(info);
         else console.log(info);
         if(cfg4Publish.delTemp) fs.rmdirSync(tempDir);

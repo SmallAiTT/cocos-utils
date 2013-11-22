@@ -16,7 +16,9 @@ function pubFrmt(filePath, info){
 }
 
 function jsResFrmt(filePath, info){
-    fs.writeFileSync(filePath, 'js.' + info.name + ' = {};\r\n' + 'js.' + info.name + '.MyLayer_js = "[%name%]src/MyLayer.js"');
+    console.log(path.join('src', "MyLayer.js"));
+    fs.writeFileSync(filePath, 'js.' + info.name + ' = {\r\n    MyLayer_js : ' + JSON.stringify('[%' + info.name + '%]src/MyLayer.js')
+        + '\r\n};');
 }
 
 /**
